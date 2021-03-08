@@ -93,5 +93,4 @@ if __name__ == '__main__':
     #     gpus[0],
     #     [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=4096)]
     # )
-    tf.compat.v1.disable_eager_execution()
     main()

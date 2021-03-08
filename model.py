@@ -47,41 +47,40 @@ weight_init = tf.keras.initializers.GlorotNormal()
 weight_regularizer = None
 weight_regularizer_fully = None
 
-def conv(x, channels, kernel=4, stride=2, pad=0, pad_type='zero', use_bias=True, sn=False, scope='conv_0'):
-    with tf.compat.v1.variable_scope(scope):
-        if pad > 0:
-            h = x.get_shape().as_list()[1]
-            if h % stride == 0:
-                pad = pad * 2
-            else:
-                pad = max(kernel - (h % stride), 0)
-
-            pad_top = pad // 2
-            pad_bottom = pad - pad_top
-            pad_left = pad // 2
-            pad_right = pad - pad_left
-
-            if pad_type == 'zero':
-                x = tf.pad(x, [[0, 0], [pad_top, pad_bottom], [pad_left, pad_right], [0, 0]])
-            if pad_type == 'reflect':
-                x = tf.pad(x, [[0, 0], [pad_top, pad_bottom], [pad_left, pad_right], [0, 0]], mode='REFLECT')
-
-        if sn:
-            w = tf.get_variable("kernel", shape=[kernel, kernel, x.get_shape()[-1], channels], initializer=weight_init,
-                                regularizer=weight_regularizer)
-            x = tf.nn.conv2d(input=x, filter=spectral_norm(w),
-                             strides=[1, stride, stride, 1], padding='VALID')
-            if use_bias:
-                bias = tf.get_variable("bias", [channels], initializer=tf.constant_initializer(0.0))
-                x = tf.nn.bias_add(x, bias)
-
+def conv(x, channels, kernel=4, stride=2, pad=0, pad_type='zero', use_bias=True, sn=False):
+    if pad > 0:
+        h = x.get_shape().as_list()[1]
+        if h % stride == 0:
+            pad = pad * 2
         else:
-            x = tf.compat.v1.layers.conv2d(inputs=x, filters=channels,
-                                 kernel_size=kernel, kernel_initializer=weight_init,
-                                 kernel_regularizer=weight_regularizer,
-                                 strides=stride, use_bias=use_bias)
+            pad = max(kernel - (h % stride), 0)
 
-        return x
+        pad_top = pad // 2
+        pad_bottom = pad - pad_top
+        pad_left = pad // 2
+        pad_right = pad - pad_left
+
+        if pad_type == 'zero':
+            x = tf.pad(x, [[0, 0], [pad_top, pad_bottom], [pad_left, pad_right], [0, 0]])
+        if pad_type == 'reflect':
+            x = tf.pad(x, [[0, 0], [pad_top, pad_bottom], [pad_left, pad_right], [0, 0]], mode='REFLECT')
+
+    if sn:
+        w = tf.get_variable("kernel", shape=[kernel, kernel, x.get_shape()[-1], channels], initializer=weight_init,
+                            regularizer=weight_regularizer)
+        x = tf.nn.conv2d(input=x, filter=spectral_norm(w),
+                         strides=[1, stride, stride, 1], padding='VALID')
+        if use_bias:
+            bias = tf.get_variable("bias", [channels], initializer=tf.constant_initializer(0.0))
+            x = tf.nn.bias_add(x, bias)
+
+    else:
+        x = tf.compat.v1.layers.conv2d(inputs=x, filters=channels,
+                             kernel_size=kernel, kernel_initializer=weight_init,
+                             kernel_regularizer=weight_regularizer,
+                             strides=stride, use_bias=use_bias)
+
+    return x
 
 def hw_flatten(x):
     return tf.reshape(x, shape=[x.shape[0], -1, x.shape[-1]])
@@ -89,49 +88,48 @@ def hw_flatten(x):
 def max_pooling(x) :
     return tf.compat.v1.layers.max_pooling2d(x, pool_size=2, strides=2, padding='SAME')
 
-def attention(x, channels, scope='attention'):
-    with tf.compat.v1.variable_scope(scope):
-        f = conv(x, channels // 8, kernel=1, stride=1, sn=False, scope='f_conv')  # [bs, h, w, c']
-        g = conv(x, channels // 8, kernel=1, stride=1, sn=False, scope='g_conv')  # [bs, h, w, c']
-        h = conv(x, channels, kernel=1, stride=1, sn=False, scope='h_conv')  # [bs, h, w, c]
+def attention(x, channels):
+    f = conv(x, channels // 8, kernel=1, stride=1, sn=False)  # [bs, h, w, c']
+    g = conv(x, channels // 8, kernel=1, stride=1, sn=False)  # [bs, h, w, c']
+    h = conv(x, channels, kernel=1, stride=1, sn=False)  # [bs, h, w, c]
 
-        # N = h * w
-        s = tf.matmul(hw_flatten(g), hw_flatten(f), transpose_b=True)  # # [bs, N, N]
+    # N = h * w
+    s = tf.matmul(hw_flatten(g), hw_flatten(f), transpose_b=True)  # # [bs, N, N]
 
-        beta = tf.nn.softmax(s)  # attention map
+    beta = tf.nn.softmax(s)  # attention map
 
-        o = tf.matmul(beta, hw_flatten(h))  # [bs, N, C]
-        gamma = tf.get_variable("gamma", [1], initializer=tf.constant_initializer(0.0))
+    o = tf.matmul(beta, hw_flatten(h))  # [bs, N, C]
+    gamma = tf.get_variable("gamma", [1], initializer=tf.constant_initializer(0.0))
 
-        o = tf.reshape(o, shape=x.shape)  # [bs, h, w, C]
-        o = conv(o, channels, kernel=1, stride=1, sn=False, scope='attn_conv')
+    o = tf.reshape(o, shape=x.shape)  # [bs, h, w, C]
+    o = conv(o, channels, kernel=1, stride=1, sn=False)
 
-        x = gamma * o + x
+    x = gamma * o + x
 
     return x
 
-def google_attention(x, channels, scope='attention'):
-    with tf.compat.v1.variable_scope(scope):
-        batch_size, height, width, num_channels = x.get_shape().as_list()
-        f = conv(x, channels // 8, kernel=1, stride=1, sn=False, scope='f_conv')  # [bs, h, w, c']
-        f = max_pooling(f)
+def google_attention(x, channels):
+  
+    batch_size, height, width, num_channels = x.get_shape().as_list()
+    f = conv(x, channels // 8, kernel=1, stride=1, sn=False)  # [bs, h, w, c']
+    f = max_pooling(f)
 
-        g = conv(x, channels // 8, kernel=1, stride=1, sn=False, scope='g_conv')  # [bs, h, w, c']
+    g = conv(x, channels // 8, kernel=1, stride=1, sn=False)  # [bs, h, w, c']
 
-        h = conv(x, channels // 2, kernel=1, stride=1, sn=False, scope='h_conv')  # [bs, h, w, c]
-        h = max_pooling(h)
+    h = conv(x, channels // 2, kernel=1, stride=1, sn=False)  # [bs, h, w, c]
+    h = max_pooling(h)
 
-        # N = h * w
-        s = tf.matmul(hw_flatten(g), hw_flatten(f), transpose_b=True)  # # [bs, N, N]
+    # N = h * w
+    s = tf.matmul(hw_flatten(g), hw_flatten(f), transpose_b=True)  # # [bs, N, N]
 
-        beta = tf.nn.softmax(s)  # attention map
+    beta = tf.nn.softmax(s)  # attention map
 
-        o = tf.matmul(beta, hw_flatten(h))  # [bs, N, C]
-        gamma = tf.compat.v1.get_variable("gamma", [1], initializer=tf.constant_initializer(0.0))
+    o = tf.matmul(beta, hw_flatten(h))  # [bs, N, C]
+    gamma = tf.compat.v1.get_variable("gamma", [1], initializer=tf.constant_initializer(0.0))
 
-        o = tf.reshape(o, shape=[batch_size, height, width, num_channels // 2])  # [bs, h, w, C]
-        o = conv(o, channels, kernel=1, stride=1, sn=False, scope='attn_conv')
-        x = gamma * o + x
+    o = tf.reshape(o, shape=[batch_size, height, width, num_channels // 2])  # [bs, h, w, C]
+    o = conv(o, channels, kernel=1, stride=1, sn=False)
+    x = gamma * o + x
 
     return x
 
