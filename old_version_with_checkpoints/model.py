@@ -51,7 +51,6 @@ class SelfAttn(Layer):
         with tf.GradientTape():
             out = self.gamma * out + x
         #out = tf.transpose(out, perm=[0, 2, 3, 1])  # B * W * H * C
-        del attention
         return out
 '''
 weight_init = tf.keras.initializers.GlorotNormal()
