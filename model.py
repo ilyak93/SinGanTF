@@ -40,6 +40,8 @@ class SelfAttn(Layer):
         energy = proj_query @ proj_key # batch matrix-matrix product
 
         attention = self.softmax(energy)  # B * N * N
+		print(energy.get_shape().as_list())
+		print(attention.get_shape().as_list())
 
         proj_value = self.value_conv(x)
         proj_value = tf.reshape(proj_value, shape=(m_batchsize, -1, width * height))
