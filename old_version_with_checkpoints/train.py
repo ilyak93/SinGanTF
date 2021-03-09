@@ -141,7 +141,7 @@ class Trainer:
                 z_rec = tf.zeros_like(real)
 
             for i in range(6):
-                if i == 0 and step.eval() == 0:
+                if i == 0 and tf.get_static_value(step) == 0:
                     if scale == 0:
                         """ Coarsest scale is purely generative """
                         prev_rand = tf.zeros_like(real)
