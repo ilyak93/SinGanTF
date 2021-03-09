@@ -7,8 +7,11 @@ from tensorflow.keras.metrics import Mean
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.optimizers.schedules import ExponentialDecay
 
+import functions
+from imresize import my_imresize
 from model import Generator, Discriminator
 from utils import normalize_m11, load_image, imresize, create_dir
+import torch
 
 
 class Trainer:
@@ -76,15 +79,24 @@ class Trainer:
 
     def train(self, training_image):
         """ Training """
-        real_image = load_image(training_image, image_size=self.max_size)
-        real_image = normalize_m11(real_image)
-        reals = self.create_real_pyramid(real_image)
+        real_image = functions.read_image(training_image)
+        #real_image = normalize_m11(real_image)
+
+        self.num_scales, stop_scale, scale1, self.scale_factor, reals =\
+            functions.adjust_scales2image(real_image, self.scale_factor, self.min_size, self.max_size)
+
+        real_image = functions.read_image(training_image)
+        real_image = my_imresize(real_image, scale1)
+        reals = []
+        reals = functions.creat_reals_pyramid(real_image, reals, self.scale_factor, stop_scale)
+        reals = [tf.convert_to_tensor(real.permute((0,2,3,1)).numpy(), dtype=tf.float32) for real in reals]
+
 
         self.Z_fixed = []
         self.NoiseAmp = []
         noise_amp = tf.constant(0.1)
 
-        for scale in range(self.num_scales):
+        for scale in range(stop_scale + 1):
             print(scale)
             start = time.perf_counter()
 
