@@ -280,7 +280,7 @@ class Trainer:
         dis_loss, gen_loss, rec_loss = metrics
 
         with self.summary_writer.as_default():
-            tf.summary.scalar('dis_loss', dis_loss, step=scale)
-            tf.summary.scalar('gen_loss', gen_loss, step=scale)
-            tf.summary.scalar('rec_loss', rec_loss, step=scale)
+            tf.summary.scalar('dis_loss', dis_loss)
+            tf.summary.scalar('gen_loss', gen_loss)
+            tf.summary.scalar('rec_loss', rec_loss)
             # tf.summary.scalar('PSNR', psnr, step=epoch)
