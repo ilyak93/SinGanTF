@@ -209,7 +209,7 @@ class Generator(Model):
         x = self.convblock1(x)
         x = self.convblock2(x)
         x = self.convblock3(x)
-        x,_ = self.attention(x)
+        x = self.attention(x)
         x = self.tail(x)
         x = Add()([x, prev])
 
@@ -236,7 +236,7 @@ class Discriminator(Model):
         x = self.convblock1(x)
         x = self.convblock2(x)
         x = self.convblock3(x)
-        x, _ = self.attention(x)
+        x = self.attention(x)
         x = self.tail(x)
 
         return x
