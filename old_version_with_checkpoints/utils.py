@@ -58,8 +58,7 @@ def imresize(image, min_size=0, scale_factor=None, new_shapes=None):
     image = tf.image.resize(
                 image, 
                 (new_height, new_width),
-                method=tf.image.ResizeMethod.BILINEAR,
-                antialias=True
+                method=tf.image.ResizeMethod.BILINEAR
             )
     return image
 
