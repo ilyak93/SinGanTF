@@ -95,5 +95,5 @@ if __name__ == '__main__':
     #     [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=4096)]
     # )
     tf.enable_eager_execution()
-    print(tf.executing_eagerly())
+	sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
     main()
