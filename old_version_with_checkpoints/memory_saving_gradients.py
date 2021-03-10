@@ -413,3 +413,33 @@ def my_add_control_inputs(wait_to_do_ops, inputs_to_do_before):
     for op in wait_to_do_ops:
         ci = [i for i in inputs_to_do_before if op.control_inputs is None or i not in op.control_inputs]
         ge.add_control_inputs(op, ci)
+		
+
+'''
+#!/bin/bash
+
+# install CUDA Toolkit v9.0
+# instructions from https://developer.nvidia.com/cuda-downloads (linux -> x86_64 -> Ubuntu -> 16.04 -> deb)
+CUDA_REPO_PKG="cuda-10-0_10.0.130-1_amd64.deb"
+wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/${CUDA_REPO_PKG}
+sudo dpkg -i ${CUDA_REPO_PKG}
+sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+sudo apt-get update
+sudo apt-get -y install cuda-10-0
+
+
+# install cuDNN v7.0
+CUDNN_PKG="libcudnn7_7.6.1.34-1+cuda10.0_amd64.deb"
+wget https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/${CUDNN_PKG}
+sudo dpkg -i ${CUDNN_PKG}
+sudo apt-get update
+
+# install NVIDIA CUDA Profile Tools Interface ( libcupti-dev v9.0)
+sudo apt-get install cuda-command-line-tools-10-0
+
+# set environment variables
+export PATH=${PATH}:/usr/local/cuda-10.0/bin
+export CUDA_HOME=${CUDA_HOME}:/usr/local/cuda:/usr/local/cuda-10.0
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/cuda-10.0/lib64
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/extras/CUPTI/lib64
+'''
