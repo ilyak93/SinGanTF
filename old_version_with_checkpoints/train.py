@@ -13,9 +13,9 @@ from model import Generator, Discriminator
 from utils import normalize_m11, load_image, imresize, create_dir
 import torch
 
-import memory_saving_gradients as gc
-from tensorflow.python.ops import gradients as tf_gradients
-tf_gradients.gradients = gc.gradients_speed
+#import memory_saving_gradients as gc
+#from tensorflow.python.ops import gradients as tf_gradients
+#tf_gradients.gradients = gc.gradients_speed
 
 
 class Trainer:
