@@ -51,7 +51,7 @@ class SelfAttn(Layer):
         with tf.GradientTape():
             out = self.gamma * out + x
         #out = tf.transpose(out, perm=[0, 2, 3, 1])  # B * W * H * C
-        return out
+        return out, attention
 '''
 weight_init = tf.keras.initializers.GlorotNormal()
 weight_regularizer = None
@@ -208,7 +208,7 @@ class Generator(Model):
         x = self.convblock1(x)
         x = self.convblock2(x)
         x = self.convblock3(x)
-        x = self.attention(x)
+        x,_ = self.attention(x)
         x = self.tail(x)
         x = Add()([x, prev])
 
@@ -235,7 +235,7 @@ class Discriminator(Model):
         x = self.convblock1(x)
         x = self.convblock2(x)
         x = self.convblock3(x)
-        x = self.attention(x)
+        x, _ = self.attention(x)
         x = self.tail(x)
 
         return x
