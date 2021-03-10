@@ -15,7 +15,7 @@ import torch
 
 import memory_saving_gradients as gc
 from tensorflow.python.ops import gradients as tf_gradients
-tf_gradients.gradients = gc.gradients_memory
+tf_gradients.gradients = gc.gradients_speed
 
 
 class Trainer:
