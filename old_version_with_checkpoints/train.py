@@ -3,7 +3,7 @@ import os
 import time
 import numpy as np
 import tensorflow as tf
-from tensorflow.metrics import mean
+from tf.compat.v1.metrics import mean
 from tensorflow.python.keras.optimizers import Adam
 from tensorflow.python.keras.optimizers.schedules import ExponentialDecay
 
