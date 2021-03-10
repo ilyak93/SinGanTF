@@ -115,9 +115,11 @@ class Trainer:
             self.generators[scale](prev_rec, prev_rec)
 
             train_step = self.wrapper()
-
+            print(tf.get_collection('checkpoints'))
             for step in tf.range(self.num_iters):
                 z_fixed, prev_rec, noise_amp, metrics = train_step(reals, prev_rec, noise_amp, scale, step, g_opt, d_opt)
+            
+            print(tf.get_collection('checkpoints'))
     
             self.Z_fixed.append(z_fixed)
             self.NoiseAmp.append(noise_amp)
